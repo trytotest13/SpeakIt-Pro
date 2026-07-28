@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakIt Pro - High Quality TTS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            background-image: radial-gradient(circle at 50% 0%, #1f1f1f 0%, #121212 70%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 24px;
+            color: #ededed;
+        }
+
+        /* Smooth scrollbar for textarea */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .status-dot {
+            height: 6px; width: 6px;
+            background-color: #22d3ee;
+            border-radius: 50%; display: inline-block;
+            box-shadow: 0 0 12px 2px rgba(34, 211, 238, 0.6);
+        }
+
+        /* Robust Dual-Layer Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            outline: none;
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 6px;
+            background: transparent;
+            border: none;
+        }
+
+        input[type=range]::-moz-range-track {
+            height: 6px;
+            background: transparent;
+            border: none;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px; width: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -6px; /* Centers 18px thumb over the 6px track */
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
+            position: relative;
+            z-index: 20;
+        }
+        
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type=range]::-moz-range-thumb {
+            height: 18px; width: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
+        }
+
+        input[type=range]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Custom Dropdown Styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23A3A3A3%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 1rem top 50%; background-size: 0.65rem auto;
+        }
+
+        .control-btn { transition: all 0.2s ease; }
+        .control-btn:active { transform: scale(0.9); }
+        
+        .glowing-play {
+            box-shadow: 0 0 25px rgba(34, 211, 238, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="w-full max-w-[800px] bg-[#1a1a1a] rounded-[32px] p-8 sm:p-10 shadow-2xl relative overflow-hidden border border-[#2a2a2a]">
+        
+        <header class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">SpeakIt Pro</h1>
+            </div>
+            <div class="inline-flex items-center gap-2 bg-[#222] border border-[#333] px-4 py-2 rounded-full">
+                <span class="status-dot"></span>
+                <span class="text-xs font-semibold text-[#a3a3a3] uppercase tracking-wider">Neural Engine</span>
+            </div>
+        </header>
+
+        <div class="space-y-6">
+            <!-- Text Input Area -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-end px-1">
+                    <label for="text-input" class="text-sm font-semibold text-[#737373] uppercase tracking-wider">Document Content</label>
+                    <div class="flex space-x-4 text-xs font-medium text-[#737373]">
+                        <span>Words: <span id="word-count" class="text-[#d4d4d4]">0</span></span>
+                        <span>Chars: <span id="char-count" class="text-[#d4d4d4]">0</span></span>
+                    </div>
+                </div>
+                
+                <textarea 
+                    id="text-input" rows="5" maxlength="200000"
+                    placeholder="Enter or paste your text here to speak..." 
+                    class="w-full bg-[#222] border border-[#333] focus:border-[#22d3ee]/50 rounded-2xl px-5 py-4 text-[#ededed] text-base leading-relaxed transition-all resize-none outline-none placeholder:text-[#525252]"
+                ></textarea>
+            </div>
+
+            <!-- Player UI -->
+            <div id="player-ui" class="bg-[#222] rounded-[24px] p-8 space-y-8 hidden border border-[#333]">
+                
+                <!-- Progress & Timeline -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-end">
+                        <div class="space-y-1">
+                            <span class="text-[11px] text-[#737373] uppercase font-bold tracking-wider">Global Progress</span>
+                            <div class="text-2xl font-bold text-white" id="progress-text">Part 1 of 2</div>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <span class="text-[11px] text-[#737373] uppercase font-bold tracking-wider">Duration</span>
+                            <div class="text-lg font-medium text-[#a3a3a3]" id="time-display-main">00:00 / 00:00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-2 pb-1 relative">
+                        <!-- Dual-Layer Seek Bar Container -->
+                        <div class="relative w-full flex items-center h-4">
+                            <!-- Background Track & Cyan Fill -->
+                            <div class="absolute inset-x-0 h-1.5 bg-[#333333] rounded-full overflow-hidden pointer-events-none">
+                                <div id="seek-fill" class="h-full bg-[#22d3ee] transition-all duration-75" style="width: 0%;"></div>
+                            </div>
+                            <!-- Native Interactive Range Input for time scrubbing -->
+                            <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1" class="w-full relative z-10 cursor-pointer">
+                        </div>
+
+                        <div class="flex justify-between text-[#737373] text-sm mt-2 font-medium">
+                            <span id="time-current">0:00</span>
+                            <span id="time-total">0:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Box (Volume & Speed) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border border-[#333] bg-[#1a1a1a] rounded-[20px] p-6 items-center">
+                    <!-- Volume -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[11px] font-bold text-[#737373] uppercase tracking-wider block">Volume</label>
+                            <span id="volume-label" class="text-[10px] font-bold text-[#a3a3a3]">100%</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#a3a3a3]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h2l4 4V6L7 10H5z" /></svg>
+                            
+                            <!-- Dual-Layer Volume Bar Container -->
+                            <div class="relative w-full flex items-center h-4">
+                                <!-- Background Track & Cyan Fill -->
+                                <div class="absolute inset-x-0 h-1.5 bg-[#333333] rounded-full overflow-hidden pointer-events-none">
+                                    <div id="volume-fill" class="h-full bg-[#22d3ee] transition-all duration-75" style="width: 100%;"></div>
+                                </div>
+                                <!-- Native Interactive Range Input -->
+                                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="w-full relative z-10 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Speed -->
+                    <div class="space-y-3">
+                        <label class="text-[11px] font-bold text-[#737373] uppercase tracking-wider block">Playback Speed</label>
+                        <select id="speed-control" class="w-full bg-[#222] border border-[#333] rounded-xl px-4 py-3 text-sm font-medium text-[#ededed] outline-none cursor-pointer focus:border-[#22d3ee]/50 transition-colors">
+                            <option value="0.5">0.5x Slower</option>
+                            <option value="0.75">0.75x Slow</option>
+                            <option value="1" selected>1.0x Normal</option>
+                            <option value="1.25">1.25x Fast</option>
+                            <option value="1.5">1.5x Faster</option>
+                            <option value="2">2.0x Double</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Transport Controls -->
+                <div class="flex items-center justify-center space-x-12 pt-2">
+                    
+                    <!-- Previous Part -->
+                    <div class="flex flex-col items-center group cursor-pointer control-btn" id="prev-btn-wrapper">
+                        <button id="prev-btn" class="text-[#737373] group-hover:text-white mb-2 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                        </button>
+                        <span class="text-[11px] font-bold text-[#737373] group-hover:text-white uppercase tracking-wider transition-colors">Previous Part</span>
+                    </div>
+                    
+                    <!-- Play/Pause -->
+                    <div class="flex flex-col items-center">
+                        <button id="play-btn-main" class="w-20 h-20 rounded-full border-[3px] border-[#22d3ee] flex items-center justify-center glowing-play bg-transparent transition-all active:scale-95 mb-2 group">
+                            <!-- Play Icon -->
+                            <svg id="play-icon-main" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 text-[#22d3ee] ml-1">
+                                <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 20.027c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />
+                            </svg>
+                            <!-- Pause/Stop Icon -->
+                            <svg id="stop-icon-main" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 text-[#22d3ee] hidden">
+                                <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0a.75.75 0 01.75-.75h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75h-1.5a.75.75 0 01-.75-.75V5.25z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <span class="text-[11px] font-bold text-white uppercase tracking-wider">Play</span>
+                    </div>
+                    
+                    <!-- Next Part -->
+                    <div class="flex flex-col items-center group cursor-pointer control-btn" id="next-btn-wrapper">
+                        <button id="next-btn" class="text-[#737373] group-hover:text-white mb-2 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                        </button>
+                        <span class="text-[11px] font-bold text-[#737373] group-hover:text-white uppercase tracking-wider transition-colors">Next Part</span>
+                    </div>
+
+                </div>
+
+                <!-- Text Feature / Segment Preview -->
+                <div class="border-t border-[#333] pt-6 mt-2">
+                    <!-- Removed truncate class, added leading-relaxed for better readability of full text -->
+                    <p id="current-segment-preview" class="text-center text-[14px] text-[#a3a3a3] italic leading-relaxed px-2"></p>
+                </div>
+
+            </div>
+
+            <!-- Primary Actions -->
+            <div id="action-buttons">
+                <button id="init-btn" class="w-full bg-[#22d3ee] hover:bg-[#06b6d4] text-black font-bold py-4 rounded-2xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(34,211,238,0.2)] text-lg uppercase tracking-wide">
+                    Initialize Audio
+                </button>
+            </div>
+
+            <audio id="tts-audio" class="hidden"></audio>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text-input');
+        const charCountDisplay = document.getElementById('char-count');
+        const wordCountDisplay = document.getElementById('word-count');
+        const initBtn = document.getElementById('init-btn');
+        const playerUI = document.getElementById('player-ui');
+        
+        const playBtnMain = document.getElementById('play-btn-main');
+        const playIconMain = document.getElementById('play-icon-main');
+        const stopIconMain = document.getElementById('stop-icon-main');
+        
+        const prevBtnWrapper = document.getElementById('prev-btn-wrapper');
+        const nextBtnWrapper = document.getElementById('next-btn-wrapper');
+        
+        const seekBar = document.getElementById('seek-bar');
+        const seekFill = document.getElementById('seek-fill');
+        
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeFill = document.getElementById('volume-fill');
+        const volumeLabel = document.getElementById('volume-label');
+        
+        const speedControl = document.getElementById('speed-control');
+        
+        const timeDisplayMain = document.getElementById('time-display-main');
+        const timeCurrent = document.getElementById('time-current');
+        const timeTotal = document.getElementById('time-total');
+        const progressText = document.getElementById('progress-text');
+        const segmentPreview = document.getElementById('current-segment-preview');
+        
+        const audio = document.getElementById('tts-audio');
+
+        let isPlaying = false;
+        let isDraggingSeek = false;
+        let textChunks = [], currentChunkIndex = 0;
+        let originalText = "";
+
+        function updateSliderFill(slider, fillElement) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const val = parseFloat(slider.value) || 0;
+            const percentage = max === min ? 0 : ((val - min) / (max - min)) * 100;
+            if (fillElement) {
+                fillElement.style.width = `${percentage}%`;
+            }
+        }
+
+        updateSliderFill(volumeSlider, volumeFill);
+        updateSliderFill(seekBar, seekFill);
+
+        textInput.addEventListener('input', () => {
+            const text = textInput.value;
+            charCountDisplay.textContent = text.length.toLocaleString();
+            wordCountDisplay.textContent = (text.trim() === "" ? 0 : text.trim().split(/\s+/).length).toLocaleString();
+            
+            if (!playerUI.classList.contains('hidden')) {
+                if (text.trim() !== originalText) {
+                    initBtn.textContent = "Apply Changes & Restart";
+                    initBtn.classList.remove('hidden');
+                } else {
+                    initBtn.classList.add('hidden');
+                }
+            }
+        });
+
+        function formatTime(s) {
+            if (isNaN(s) || !isFinite(s)) return "00:00";
+            const m = Math.floor(s/60); const sc = Math.floor(s%60);
+            return `${m.toString().padStart(2, '0')}:${sc.toString().padStart(2, '0')}`;
+        }
+        
+        function formatTimeSingle(s) {
+            if (isNaN(s) || !isFinite(s)) return "0:00";
+            const m = Math.floor(s/60); const sc = Math.floor(s%60);
+            return `${m}:${sc.toString().padStart(2, '0')}`;
+        }
+
+        const getTTSUrl = (t) => `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(t)}&tl=en&client=tw-ob`;
+
+        function chunkText(text) {
+            const maxLength = 160; const chunks = [];
+            const sentences = text.match(/[^.!?]+[.!?]+|\s*[^.!?]+$/g) || [text];
+            let current = "";
+            sentences.forEach(s => {
+                if ((current + s).length < maxLength) current += (current ? " " : "") + s;
+                else {
+                    if (current) chunks.push(current.trim());
+                    if (s.length > maxLength) {
+                        const words = s.split(' '); let tmp = "";
+                        words.forEach(w => {
+                            if ((tmp + w).length < maxLength) tmp += (tmp ? " " : "") + w;
+                            else { chunks.push(tmp.trim()); tmp = w; }
+                        });
+                        current = tmp;
+                    } else current = s;
+                }
+            });
+            if (current) chunks.push(current.trim());
+            return chunks.filter(c => c.length > 0);
+        }
+
+        function applyAudioSettings() {
+            audio.playbackRate = parseFloat(speedControl.value);
+            audio.volume = parseFloat(volumeSlider.value);
+        }
+
+        function loadAndPlaySegment() {
+            if (currentChunkIndex < 0) currentChunkIndex = 0;
+            if (currentChunkIndex >= textChunks.length) { stopPlayback(); return; }
+            
+            progressText.textContent = `Part ${currentChunkIndex + 1} of ${textChunks.length}`;
+            
+            // Full text preview (truncation removed)
+            const currentText = textChunks[currentChunkIndex];
+            segmentPreview.textContent = `"${currentText}"`;
+            
+            seekBar.value = 0;
+            updateSliderFill(seekBar, seekFill);
+            
+            audio.src = getTTSUrl(textChunks[currentChunkIndex]);
+            audio.load();
+            
+            audio.oncanplay = () => {
+                applyAudioSettings();
+            };
+
+            if (isPlaying) {
+                audio.play().then(() => {
+                    applyAudioSettings(); 
+                }).catch(stopPlayback);
+            }
+        }
+
+        initBtn.addEventListener('click', () => {
+            const t = textInput.value.trim(); if (!t) return;
+            
+            originalText = t;
+            textChunks = chunkText(t);
+            currentChunkIndex = 0;
+            
+            playerUI.classList.remove('hidden'); 
+            initBtn.classList.add('hidden');
+            
+            audio.pause();
+            
+            isPlaying = true; 
+            playIconMain.classList.add('hidden'); 
+            stopIconMain.classList.remove('hidden');
+            playBtnMain.nextElementSibling.textContent = "Pause";
+            
+            loadAndPlaySegment();
+        });
+
+        function stopPlayback() { 
+            isPlaying = false; 
+            audio.pause(); 
+            playIconMain.classList.remove('hidden'); 
+            stopIconMain.classList.add('hidden');
+            playBtnMain.nextElementSibling.textContent = "Play";
+        }
+        
+        playBtnMain.addEventListener('click', () => {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                isPlaying = true;
+                playIconMain.classList.add('hidden');
+                stopIconMain.classList.remove('hidden');
+                playBtnMain.nextElementSibling.textContent = "Pause";
+                loadAndPlaySegment();
+            }
+        });
+
+        const goNext = () => { if (currentChunkIndex < textChunks.length - 1) { currentChunkIndex++; loadAndPlaySegment(); } };
+        const goPrev = () => { if (currentChunkIndex > 0) { currentChunkIndex--; loadAndPlaySegment(); } };
+
+        nextBtnWrapper.addEventListener('click', goNext);
+        prevBtnWrapper.addEventListener('click', goPrev);
+        
+        seekBar.addEventListener('input', () => {
+            isDraggingSeek = true;
+            updateSliderFill(seekBar, seekFill);
+            if (audio.duration) {
+                const targetTime = (parseFloat(seekBar.value) / 100) * audio.duration;
+                timeCurrent.textContent = formatTimeSingle(targetTime);
+            }
+        });
+        
+        seekBar.addEventListener('change', () => { 
+            if (audio.duration) {
+                audio.currentTime = (parseFloat(seekBar.value) / 100) * audio.duration;
+            }
+            isDraggingSeek = false;
+        });
+        
+        volumeSlider.addEventListener('input', () => {
+            updateSliderFill(volumeSlider, volumeFill);
+            volumeLabel.textContent = Math.round(volumeSlider.value * 100) + '%';
+            applyAudioSettings();
+        });
+        
+        speedControl.addEventListener('change', applyAudioSettings);
+
+        audio.ontimeupdate = () => { 
+            if (audio.duration) {
+                if (!isDraggingSeek) {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    seekBar.value = progress;
+                    updateSliderFill(seekBar, seekFill);
+                    timeCurrent.textContent = formatTimeSingle(audio.currentTime);
+                }
+                
+                timeTotal.textContent = formatTimeSingle(audio.duration);
+                const cur = formatTime(audio.currentTime);
+                const dur = formatTime(audio.duration);
+                timeDisplayMain.textContent = `${cur} / ${dur}`; 
+            }
+        };
+        
+        audio.onended = () => {
+            if (isPlaying && currentChunkIndex < textChunks.length - 1) {
+                currentChunkIndex++; 
+                setTimeout(() => { if (isPlaying) loadAndPlaySegment(); }, 300);
+            } else stopPlayback();
+        };
+    </script>
+</body>
+</html>
