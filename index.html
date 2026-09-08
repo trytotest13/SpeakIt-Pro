@@ -1,167 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>SpeakIt Pro - Native TTS Engine</title>
-    <meta name="title" content="SpeakIt Pro - Native TTS Engine">
-    <meta name="description" content="Convert documents into high-quality spoken audio locally. 100% private, no API limits.">
-    <meta name="theme-color" content="#121212">
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Link to external CSS -->
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskGram — Telegram Style</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="app">
 
-    <main class="w-full max-w-[800px] bg-[#1a1a1a] rounded-[32px] p-8 sm:p-10 shadow-2xl relative overflow-hidden border border-[#2a2a2a]">
-        
-        <header class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">SpeakIt Pro</h1>
-            </div>
-            <div class="inline-flex items-center gap-2 bg-[#222] border border-[#333] px-4 py-2 rounded-full" aria-live="polite">
-                <span class="status-dot"></span>
-                <span class="text-xs font-semibold text-[#a3a3a3] uppercase tracking-wider">Local Engine Ready</span>
-            </div>
-        </header>
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <button class="icon-btn" id="profileMenuBtn" title="Switch profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div id="syncStatus" class="sync-dot" style="display:none;"></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" type="text" placeholder="Search lists and tasks">
+      </div>
+    </div>
 
-        <section class="space-y-6">
-            <!-- Text Input Area -->
-            <div class="space-y-3">
-                <div class="flex justify-between items-end px-1">
-                    <label for="text-input" class="text-sm font-semibold text-[#737373] uppercase tracking-wider">Document Content</label>
-                    <div class="flex space-x-4 text-xs font-medium text-[#737373]" aria-live="polite">
-                        <span>Words: <span id="word-count" class="text-[#d4d4d4]">0</span></span>
-                        <span>Chars: <span id="char-count" class="text-[#d4d4d4]">0</span></span>
-                    </div>
-                </div>
-                
-                <textarea 
-                    id="text-input" rows="5" maxlength="200000"
-                    placeholder="Enter or paste your text here to speak..." 
-                    aria-label="Text to convert to speech"
-                    class="w-full bg-[#222] border border-[#333] focus:border-[#22d3ee]/50 rounded-2xl px-5 py-4 text-[#ededed] text-base leading-relaxed transition-all resize-none outline-none placeholder:text-[#525252]"
-                ></textarea>
-            </div>
+    <!-- PROFILE SWITCHER DROPDOWN -->
+    <div class="profile-backdrop" id="profileBackdrop" aria-hidden="true"></div>
+    <div class="profile-menu" id="profileMenu">
+      <div class="profile-menu-header">
+        <div class="avatar" id="profileMenuCurrentAvatar"></div>
+        <div class="profile-menu-current-info">
+          <div class="profile-menu-current-name" id="profileMenuCurrentName"></div>
+          <div class="profile-menu-current-sub">Current profile</div>
+        </div>
+      </div>
+      <div class="profile-menu-list" id="profileMenuList"></div>
+      <div class="profile-menu-add" id="profileMenuAddBtn">
+        <div class="profile-menu-add-avatar">+</div>
+        <span>Add profile</span>
+      </div>
+    </div>
 
-            <!-- Player UI -->
-            <div id="player-ui" class="bg-[#222] rounded-[24px] p-8 space-y-8 hidden border border-[#333]" role="region" aria-label="Audio Player">
-                
-                <!-- Progress & Timeline -->
-                <div class="space-y-4">
-                    <div class="flex justify-between items-end">
-                        <div class="space-y-1">
-                            <span class="text-[11px] text-[#737373] uppercase font-bold tracking-wider">Document Progress</span>
-                            <div class="text-2xl font-bold text-white" id="progress-text" aria-live="polite">Part 1 of 2</div>
-                        </div>
-                        <div class="text-right space-y-1">
-                            <span class="text-[11px] text-[#737373] uppercase font-bold tracking-wider">Completion</span>
-                            <div class="text-lg font-medium text-[#a3a3a3]" id="percentage-display" aria-live="polite">0%</div>
-                        </div>
-                    </div>
-                    
-                    <div class="pt-2 pb-1 relative">
-                        <div class="relative w-full flex items-center h-4">
-                            <div class="absolute inset-x-0 h-1.5 bg-[#333333] rounded-full overflow-hidden pointer-events-none">
-                                <div id="seek-fill" class="h-full bg-[#22d3ee] transition-all duration-300" style="width: 0%;"></div>
-                            </div>
-                            <input type="range" id="seek-bar" min="0" max="1" value="0" step="1" class="w-full relative z-10 cursor-pointer" aria-label="Text chunk progress">
-                        </div>
-                    </div>
-                </div>
+    <div class="list-scroll" id="listScroll"></div>
 
-                <!-- Settings Box -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border border-[#333] bg-[#1a1a1a] rounded-[20px] p-6 items-center">
-                    
-                    <!-- Voice Selector -->
-                    <div class="md:col-span-2 space-y-3">
-                        <label for="voice-select" class="text-[11px] font-bold text-[#737373] uppercase tracking-wider block">Voice Profile</label>
-                        <select id="voice-select" class="w-full bg-[#222] border border-[#333] rounded-xl px-4 py-3 text-sm font-medium text-[#ededed] outline-none cursor-pointer focus:border-[#22d3ee]/50 transition-colors">
-                            <option value="">System Default Voice</option>
-                        </select>
-                    </div>
+    <div class="new-list-row" id="newListBtn">
+      <div class="new-list-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <span>New list</span>
+    </div>
+  </div>
 
-                    <!-- Volume -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <label for="volume-slider" class="text-[11px] font-bold text-[#737373] uppercase tracking-wider block">Volume</label>
-                            <span id="volume-label" class="text-[10px] font-bold text-[#a3a3a3]">100%</span>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#a3a3a3]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h2l4 4V6L7 10H5z" /></svg>
-                            <div class="relative w-full flex items-center h-4">
-                                <div class="absolute inset-x-0 h-1.5 bg-[#333333] rounded-full overflow-hidden pointer-events-none">
-                                    <div id="volume-fill" class="h-full bg-[#22d3ee] transition-all duration-75" style="width: 100%;"></div>
-                                </div>
-                                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="w-full relative z-10 cursor-pointer" aria-label="Volume">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Speed -->
-                    <div class="space-y-3">
-                        <label for="speed-control" class="text-[11px] font-bold text-[#737373] uppercase tracking-wider block">Playback Speed</label>
-                        <select id="speed-control" class="w-full bg-[#222] border border-[#333] rounded-xl px-4 py-3 text-sm font-medium text-[#ededed] outline-none cursor-pointer focus:border-[#22d3ee]/50 transition-colors">
-                            <option value="0.5">0.5x Slower</option>
-                            <option value="0.75">0.75x Slow</option>
-                            <option value="1" selected>1.0x Normal</option>
-                            <option value="1.25">1.25x Fast</option>
-                            <option value="1.5">1.5x Faster</option>
-                            <option value="2">2.0x Double</option>
-                        </select>
-                    </div>
-                </div>
+  <!-- MAIN -->
+  <div class="main" id="main">
+    <div id="emptyState" class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12l3 3 5-6"/><circle cx="12" cy="12" r="10"/></svg>
+      <div>Select a list to see your tasks</div>
+    </div>
 
-                <!-- Transport Controls -->
-                <div class="flex items-center justify-center space-x-12 pt-2">
-                    <div class="flex flex-col items-center group cursor-pointer control-btn" id="prev-btn-wrapper">
-                        <button id="prev-btn" aria-label="Previous Part" class="text-[#737373] group-hover:text-white mb-2 transition-colors disabled:opacity-30">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-                        </button>
-                        <span class="text-[11px] font-bold text-[#737373] group-hover:text-white uppercase tracking-wider transition-colors">Previous Part</span>
-                    </div>
-                    
-                    <div class="flex flex-col items-center">
-                        <button id="play-btn-main" aria-label="Play or Pause Audio" class="w-20 h-20 rounded-full border-[3px] border-[#22d3ee] flex items-center justify-center glowing-play bg-transparent transition-all active:scale-95 mb-2 group">
-                            <svg id="play-icon-main" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 text-[#22d3ee] ml-1">
-                                <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 20.027c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />
-                            </svg>
-                            <svg id="stop-icon-main" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 text-[#22d3ee] hidden">
-                                <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0a.75.75 0 01.75-.75h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75h-1.5a.75.75 0 01-.75-.75V5.25z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                        <span id="play-status-text" class="text-[11px] font-bold text-white uppercase tracking-wider">Play</span>
-                    </div>
-                    
-                    <div class="flex flex-col items-center group cursor-pointer control-btn" id="next-btn-wrapper">
-                        <button id="next-btn" aria-label="Next Part" class="text-[#737373] group-hover:text-white mb-2 transition-colors disabled:opacity-30">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-                        </button>
-                        <span class="text-[11px] font-bold text-[#737373] group-hover:text-white uppercase tracking-wider transition-colors">Next Part</span>
-                    </div>
-                </div>
+    <div id="chatArea" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div class="panel-header">
+        <button class="icon-btn sidebar-back" id="backBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <div class="avatar" id="headerAvatar"></div>
+        <div class="panel-title">
+          <div class="name" id="headerName"></div>
+          <div class="status" id="headerStatus"></div>
+        </div>
+        <div class="panel-header-actions">
+          <button class="icon-btn" id="renameListBtn" title="Rename list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          </button>
+          <button class="icon-btn" id="clearDoneBtn" title="Clear completed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+          <button class="icon-btn" id="deleteListBtn" title="Delete list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </div>
 
-                <!-- Text Segment Preview -->
-                <div class="border-t border-[#333] pt-6 mt-2">
-                    <p id="current-segment-preview" aria-live="polite" class="text-center text-[14px] text-[#a3a3a3] italic leading-relaxed px-2"></p>
-                </div>
-            </div>
+      <div class="pinned-bar" id="pinnedBar" style="display:none;">
+        <div class="pin-stripe"></div>
+        <svg class="pinned-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-1.4-1.4a2 2 0 0 1-.6-1.4V9a5 5 0 0 0-10 0v5.2a2 2 0 0 1-.6 1.4z"/></svg>
+        <div class="pinned-bar-text">
+          <div class="pinned-bar-label" id="pinnedBarLabel">Pinned task</div>
+          <div class="pinned-bar-content" id="pinnedBarContent"></div>
+        </div>
+        <div class="pinned-bar-close" id="pinnedBarClose" title="Unpin">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
 
-            <!-- Primary Actions -->
-            <div id="action-buttons">
-                <button id="init-btn" class="w-full bg-[#22d3ee] hover:bg-[#06b6d4] text-black font-bold py-4 rounded-2xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(34,211,238,0.2)] text-lg uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
-                    Initialize Audio
-                </button>
-            </div>
+      <div class="selection-bar" id="selectionBar" style="display:none;">
+        <div class="selection-bar-left">
+          <button class="icon-btn" id="selectionCancelBtn" title="Cancel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <span id="selectionCount">0 selected</span>
+        </div>
+        <div class="selection-bar-actions">
+          <button class="icon-btn" id="selectionDoneBtn" title="Mark done">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button class="icon-btn" id="selectionDeleteBtn" title="Delete selected">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>
 
-        </section>
-    </main>
+      <div class="messages" id="messages"></div>
 
-    <!-- Link to external JS -->
-    <script src="script.js"></script>
+      <div class="composer">
+        <div class="composer-input-wrap">
+          <textarea id="taskInput" rows="1" placeholder="Write a task"></textarea>
+        </div>
+        <button class="send-btn" id="sendBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW LIST MODAL -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitle">New list</h3>
+    <input id="newListName" type="text" placeholder="e.g. Groceries" maxlength="30">
+    <div class="swatches" id="swatches"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelModal">Cancel</button>
+      <button class="btn btn-primary" id="createListBtn">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-backdrop" id="confirmBackdrop">
+  <div class="confirm-box">
+    <p id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TASK DIALOG -->
+<div class="modal-backdrop" id="editBackdrop">
+  <div class="modal">
+    <h3>Edit task</h3>
+    <input id="editTaskInput" type="text" maxlength="500">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="editCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="editSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK CONTEXT MENU -->
+<div class="context-menu" id="contextMenu"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
